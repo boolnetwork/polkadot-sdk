@@ -83,7 +83,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(Weight::from_parts(0, 32).saturating_mul(k.into()))
 	}
 	fn set_slash_fraction() -> Weight {
-		Weight::from_ref_time(18_178_000)
+		Weight::from_parts(18_178_000, 0)
 			.saturating_add(T::DbWeight::get().reads(6 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
@@ -119,7 +119,7 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_parts(0, 32).saturating_mul(k.into()))
 	}
 	fn set_slash_fraction() -> Weight {
-		Weight::from_ref_time(18_178_000)
+		Weight::from_parts(18_178_000, 0)
 			.saturating_add(RocksDbWeight::get().reads(6 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}

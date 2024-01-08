@@ -516,6 +516,7 @@ pub mod pallet {
 			}
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_slash_fraction())]
 		pub fn set_slash_fraction(
 			origin: OriginFor<T>,
