@@ -173,7 +173,9 @@ where
 			// Never yield the same slot twice.
 			if slot > self.last_slot {
 				self.last_slot = slot;
-
+				log::info!(
+					"⌛️ *********slot_duration {}", self.slot_duration.as_millis()
+				);
 				break SlotInfo::new(
 					slot,
 					Box::new(inherent_data_providers),

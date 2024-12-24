@@ -611,9 +611,16 @@ pub fn proposing_remaining_duration<Block: BlockT>(
 		.ends_at
 		.checked_duration_since(std::time::Instant::now())
 		.unwrap_or_default();
+	log::info!(
+		"⌛️ *********proposing_remaining_duration function: proposing_duration1: {}",
+		&proposing_duration.as_millis()
+	);
+	let proposing_duration = std::cmp::min(slot_remaining.clone(), proposing_duration);
 
-	let proposing_duration = std::cmp::min(slot_remaining, proposing_duration);
-
+	log::info!(
+		"⌛️ *********proposing_remaining_duration function: slot_remaining: {}, proposing_duration2: {}",
+		slot_remaining.as_millis(), &proposing_duration.as_millis()
+	);
 	// If parent is genesis block, we don't require any lenience factor.
 	if slot_info.chain_head.number().is_zero() {
 		return proposing_duration
