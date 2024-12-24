@@ -297,7 +297,9 @@ where
 			None,
 			Box::pin(async move {
 				// leave some time for evaluation and block finalization (33%)
-				let deadline = (self.now)() + max_duration - max_duration / 3;
+				let off_set = max_duration - max_duration / 8;
+				let deadline = (self.now)() + off_set;
+				info!("max_duration: {max_duration:?}, deadline add: {:?}", off_set);
 				let res = self
 					.propose_with(inherent_data, inherent_digests, deadline, block_size_limit)
 					.await;
@@ -415,7 +417,7 @@ where
 
 			let now = (self.now)();
 			if now > deadline {
-				debug!(
+				info!(
 					"Consensus deadline reached when pushing block transactions, \
 					proceeding with proposing."
 				);
@@ -431,21 +433,21 @@ where
 				pending_iterator.report_invalid(&pending_tx);
 				if skipped < MAX_SKIPPED_TRANSACTIONS {
 					skipped += 1;
-					debug!(
+					info!(
 						"Transaction would overflow the block size limit, \
 						 but will try {} more transactions before quitting.",
 						MAX_SKIPPED_TRANSACTIONS - skipped,
 					);
 					continue
 				} else if now < soft_deadline {
-					debug!(
+					info!(
 						"Transaction would overflow the block size limit, \
 						 but we still have time before the soft deadline, so \
 						 we will try a bit more."
 					);
 					continue
 				} else {
-					debug!("Reached block size limit, proceeding with proposing.");
+					info!("Reached block size limit, proceeding with proposing.");
 					break EndProposingReason::HitBlockSizeLimit
 				}
 			}
@@ -454,23 +456,23 @@ where
 			match sc_block_builder::BlockBuilder::push(&mut block_builder, pending_tx_data) {
 				Ok(()) => {
 					transaction_pushed = true;
-					debug!("[{:?}] Pushed to the block.", pending_tx_hash);
+					info!("[{:?}] Pushed to the block.", pending_tx_hash);
 				},
 				Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
 					pending_iterator.report_invalid(&pending_tx);
 					if skipped < MAX_SKIPPED_TRANSACTIONS {
 						skipped += 1;
-						debug!(
+						info!(
 							"Block seems full, but will try {} more transactions before quitting.",
 							MAX_SKIPPED_TRANSACTIONS - skipped,
 						);
 					} else if (self.now)() < soft_deadline {
-						debug!(
+						info!(
 							"Block seems full, but we still have time before the soft deadline, \
 							 so we will try a bit more before quitting."
 						);
 					} else {
-						debug!("Reached block weight limit, proceeding with proposing.");
+						info!("Reached block weight limit, proceeding with proposing.");
 						break EndProposingReason::HitBlockWeightLimit
 					}
 				},
