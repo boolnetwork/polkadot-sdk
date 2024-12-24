@@ -419,7 +419,7 @@ where
 			if now > deadline {
 				info!(
 					"Consensus deadline reached when pushing block transactions, \
-					proceeding with proposing."
+					proceeding with proposing. extrinsics num: {:?}", block_builder.extrinsics.len()
 				);
 				break EndProposingReason::HitDeadline
 			}

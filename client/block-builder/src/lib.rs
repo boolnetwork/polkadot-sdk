@@ -132,7 +132,7 @@ where
 
 /// Utility for building new (valid) blocks from a stream of extrinsics.
 pub struct BlockBuilder<'a, Block: BlockT, A: ProvideRuntimeApi<Block>, B> {
-	extrinsics: Vec<Block::Extrinsic>,
+	pub extrinsics: Vec<Block::Extrinsic>,
 	api: ApiRef<'a, A::Api>,
 	version: u32,
 	parent_hash: Block::Hash,
