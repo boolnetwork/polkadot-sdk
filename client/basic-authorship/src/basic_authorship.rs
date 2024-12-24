@@ -297,7 +297,7 @@ where
 			None,
 			Box::pin(async move {
 				// leave some time for evaluation and block finalization (33%)
-				let off_set = max_duration - max_duration / 8;
+				let off_set = max_duration - max_duration / 10;
 				let deadline = (self.now)() + off_set;
 				info!("max_duration: {max_duration:?}, deadline add: {:?}", off_set);
 				let res = self
