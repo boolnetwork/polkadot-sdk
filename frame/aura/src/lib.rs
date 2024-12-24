@@ -81,6 +81,15 @@ pub mod pallet {
 		/// Blocks authored by a disabled validator will lead to a panic as part of this module's
 		/// initialization.
 		type DisabledValidators: DisabledValidators;
+		/// The slot duration Aura should run with, expressed in milliseconds.
+		/// The effective value of this type should not change while the chain is running.
+		///
+		/// For backwards compatibility either use [`MinimumPeriodTimesTwo`] or a const.
+		///
+		/// This associated type is only present when compiled with the `experimental`
+		/// feature.
+		#[pallet::constant]
+		type SlotDuration: Get<<Self as pallet_timestamp::Config>::Moment>;
 	}
 
 	#[pallet::pallet]
@@ -194,9 +203,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Determine the Aura slot-duration based on the Timestamp module configuration.
 	pub fn slot_duration() -> T::Moment {
-		// we double the minimum block-period so each author can always propose within
-		// the majority of its slot.
-		<T as pallet_timestamp::Config>::MinimumPeriod::get().saturating_mul(2u32.into())
+		T::SlotDuration::get()
 	}
 }
 
@@ -300,9 +307,12 @@ impl<T: Config> OnTimestampSet<T::Moment> for Pallet<T> {
 		let timestamp_slot = moment / slot_duration;
 		let timestamp_slot = Slot::from(timestamp_slot.saturated_into::<u64>());
 
-		assert!(
-			CurrentSlot::<T>::get() == timestamp_slot,
-			"Timestamp slot must match `CurrentSlot`"
+		assert_eq!(
+			CurrentSlot::<T>::get(),
+			timestamp_slot,
+			"Timestamp slot must match `CurrentSlot`. This likely means that the configured block \
+			time in the node and/or rest of the runtime is not compatible with Aura's \
+			`SlotDuration`",
 		);
 	}
 }
