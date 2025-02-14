@@ -93,7 +93,15 @@ impl mixnet::request_manager::Request for Request {
 	fn with_data<T>(&self, f: impl FnOnce(Scattered<u8>) -> T, _context: &Self::Context) -> T {
 		match self {
 			Request::SubmitExtrinsic { extrinsic, .. } =>
-				f([&[SUBMIT_EXTRINSIC], extrinsic.as_ref()].as_slice().into()),
+			{
+				//f([&[SUBMIT_EXTRINSIC], extrinsic.as_ref()].as_slice().into())
+				let extrinsic = extrinsic.to_vec()[0];
+				let slice_of_arrays = [&[SUBMIT_EXTRINSIC], &[extrinsic]];
+				let slice_of_arrays = slice_of_arrays.as_slice();
+				let converted: Vec<&[u8]> = slice_of_arrays.iter().map(|&a| a as &[u8]).collect();
+                let slice_of_slices: &[&[u8]] = &converted;
+				f(slice_of_slices.into())
+			},
 		}
 	}
 
