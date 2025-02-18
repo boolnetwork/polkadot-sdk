@@ -20,10 +20,10 @@ parking_lot = "0.12.1"
 
 # When bumping wasmtime do not forget to also bump rustix
 # to exactly the same version as used by wasmtime!
-wasmtime = { version = "8.0.1", default-features = false, features = [
+wasmtime = { version = "29.0.1", default-features = false, features = [
     "cache",
     "cranelift",
-    "jitdump",
+    #"jitdump",
     "parallel-compilation",
     "pooling-allocator"
 ] }

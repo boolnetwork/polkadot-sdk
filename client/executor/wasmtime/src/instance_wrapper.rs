@@ -213,10 +213,10 @@ impl InstanceWrapper {
 					.get_table(&mut self.store, "__indirect_function_table")
 					.ok_or(Error::NoTable)?;
 				let val = table
-					.get(&mut self.store, func_ref)
+					.get(&mut self.store, func_ref.into())
 					.ok_or(Error::NoTableEntryWithIndex(func_ref))?;
 				let func = val
-					.funcref()
+					.as_func()
 					.ok_or(Error::TableElementIsNotAFunction(func_ref))?
 					.ok_or(Error::FunctionRefIsNull(func_ref))?;
 
@@ -233,10 +233,10 @@ impl InstanceWrapper {
 					.get_table(&mut self.store, "__indirect_function_table")
 					.ok_or(Error::NoTable)?;
 				let val = table
-					.get(&mut self.store, dispatcher_ref)
+					.get(&mut self.store, dispatcher_ref.into())
 					.ok_or(Error::NoTableEntryWithIndex(dispatcher_ref))?;
 				let dispatcher = val
-					.funcref()
+					.as_func()
 					.ok_or(Error::TableElementIsNotAFunction(dispatcher_ref))?
 					.ok_or(Error::FunctionRefIsNull(dispatcher_ref))?;
 

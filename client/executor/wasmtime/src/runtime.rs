@@ -247,7 +247,8 @@ fn common_config(semantics: &Semantics) -> std::result::Result<wasmtime::Config,
 	// Since wasmtime 6.0.0 the default for this is `true`, but that heavily regresses
 	// the contracts pallet's performance, so disable it for now.
 	#[allow(deprecated)]
-	config.cranelift_use_egraphs(false);
+	//config.cranelift_use_egraphs(false);
+    config.cranelift_pcc(false);
 
 	let profiler = match std::env::var_os("WASMTIME_PROFILING_STRATEGY") {
 		Some(os_string) if os_string == "jitdump" => wasmtime::ProfilingStrategy::JitDump,
@@ -280,12 +281,13 @@ fn common_config(semantics: &Semantics) -> std::result::Result<wasmtime::Config,
 
 	// Be clear and specific about the extensions we support. If an update brings new features
 	// they should be introduced here as well.
-	config.wasm_reference_types(semantics.wasm_reference_types);
+	//config.wasm_reference_types(semantics.wasm_reference_types);
 	config.wasm_simd(semantics.wasm_simd);
-	config.wasm_bulk_memory(semantics.wasm_bulk_memory);
+	config.wasm_relaxed_simd(false);
+    config.wasm_bulk_memory(semantics.wasm_bulk_memory);
 	config.wasm_multi_value(semantics.wasm_multi_value);
 	config.wasm_multi_memory(false);
-	config.wasm_threads(false);
+	//config.wasm_threads(false);
 	config.wasm_memory64(false);
 
 	let (use_pooling, use_cow) = match semantics.instantiation_strategy {
@@ -325,15 +327,20 @@ fn common_config(semantics: &Semantics) -> std::result::Result<wasmtime::Config,
 			//   size: 32384
 			//   table_elements: 1249
 			//   memory_pages: 2070
-			.instance_size(128 * 1024)
-			.instance_table_elements(8192)
-			.instance_memory_pages(memory_pages)
+			//.instance_size(128 * 1024)
+			.max_core_instance_size(128 * 1024)
+            //.instance_table_elements(8192)
+			.table_elements(8192)
+            //.instance_memory_pages(memory_pages)
 			// We can only have a single of those.
-			.instance_tables(1)
-			.instance_memories(1)
-			// This determines how many instances of the module can be
+			//.instance_tables(1)
+			.total_tables(1)
+            //.instance_memories(1)
+			.total_memories(1)
+            // This determines how many instances of the module can be
 			// instantiated in parallel from the same `Module`.
-			.instance_count(MAX_INSTANCE_COUNT);
+			//.instance_count(MAX_INSTANCE_COUNT);
+            .total_core_instances(MAX_INSTANCE_COUNT);
 
 		config.allocation_strategy(wasmtime::InstanceAllocationStrategy::Pooling(pooling_config));
 	}
