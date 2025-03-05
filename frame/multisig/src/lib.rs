@@ -615,7 +615,7 @@ impl<T: Config> Pallet<T> {
 			T::Currency::reserve(&who, deposit)?;
 
 			let initial_approvals =
-				vec![who.clone()].try_into().map_err(|_| Error::<T>::TooManySignatories)?;
+				sp_std::vec![who.clone()].try_into().map_err(|_| Error::<T>::TooManySignatories)?;
 
 			<Multisigs<T>>::insert(
 				&id,
