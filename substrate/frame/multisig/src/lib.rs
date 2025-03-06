@@ -101,9 +101,9 @@ type BalanceOf<T> =
 )]
 pub struct Timepoint<BlockNumber> {
 	/// The height of the chain at the point in time.
-	height: BlockNumber,
+	pub height: BlockNumber,
 	/// The index of the extrinsic at the point in time.
-	index: u32,
+	pub index: u32,
 }
 
 /// An open multisig operation.
@@ -114,17 +114,17 @@ where
 	MaxApprovals: Get<u32>,
 {
 	/// The extrinsic when the multisig operation was opened.
-	when: Timepoint<BlockNumber>,
+	pub when: Timepoint<BlockNumber>,
 	/// The amount held in reserve of the `depositor`, to be returned once the operation ends.
-	deposit: Balance,
+	pub deposit: Balance,
 	/// The account who opened it (i.e. the first to approve it).
-	depositor: AccountId,
+	pub depositor: AccountId,
 	/// The approvals achieved so far, including the depositor. Always sorted.
-	approvals: BoundedVec<AccountId, MaxApprovals>,
+	pub approvals: BoundedVec<AccountId, MaxApprovals>,
 	/// Call data to execute.
-	call: Option<BoundedVec<u8, ConstU32<MAX_SIZE>>>,
+	pub call: Option<BoundedVec<u8, ConstU32<MAX_SIZE>>>,
 	/// If the call hash been executed.
-	finished: bool,
+	pub finished: bool,
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -134,11 +134,11 @@ where
 	MaxSignatories: Get<u32>,
 {
 	/// The multisig account.
-	multisig: AccountId,
+	pub multisig: AccountId,
 	/// signatories for this multisig.
-	signatories: BoundedVec<AccountId, MaxSignatories>,
+	pub signatories: BoundedVec<AccountId, MaxSignatories>,
 	/// The total number of approvals for this dispatch before it is executed.
-	threshold: u16,
+	pub threshold: u16,
 }
 
 type CallHash = [u8; 32];
