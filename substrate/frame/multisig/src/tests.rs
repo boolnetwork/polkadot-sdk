@@ -23,6 +23,7 @@ use super::*;
 
 use crate as pallet_multisig;
 use frame_support::{
+	parameter_types,
 	assert_noop, assert_ok, derive_impl,
 	traits::{ConstU32, ConstU64, Contains},
 };
@@ -64,6 +65,11 @@ impl Contains<RuntimeCall> for TestBaseCallFilter {
 		}
 	}
 }
+
+parameter_types! {
+	pub TreasuryAccount: u64 = 1;
+}
+
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
@@ -71,6 +77,9 @@ impl Config for Test {
 	type DepositBase = ConstU64<1>;
 	type DepositFactor = ConstU64<1>;
 	type MaxSignatories = ConstU32<3>;
+	type MaxMultisigs = ConstU32<100>;
+	type MaxCalls = ConstU32<100>;
+	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = ();
 }
 
