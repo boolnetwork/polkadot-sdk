@@ -365,7 +365,7 @@ pub mod pallet {
 			let signatories = Self::ensure_sorted_and_insert(other_signatories, who)?;
 
 			let id = Self::multi_account_id(&signatories, 1);
-			let (call_hash, call_len) = call.using_encoded(|d| (blake2_256(d), d.len()));
+			let (call_hash, call_len) = call.using_encoded(|d| (blake2_256(&(d, Self::timepoint()).encode()), d.len()));
 			let result = call.dispatch(RawOrigin::Signed(id.clone()).into());
 			let mut executed_calls = ExecutedCalls::<T>::get(&id);
 			let pos = executed_calls.len() as usize;
@@ -655,7 +655,7 @@ impl<T: Config> Pallet<T> {
 		// Threshold > 1; this means it's a multi-step operation. We extract the `call_hash`.
 		let (call_hash, call_len, maybe_call) = match call_or_hash {
 			CallOrHash::Call(call) => {
-				let (call_hash, call_len) = call.using_encoded(|d| (blake2_256(d), d.len()));
+				let (call_hash, call_len) = call.using_encoded(|d| (blake2_256(&(d, Self::timepoint()).encode()), d.len()));
 				(call_hash, call_len, Some(call))
 			},
 			CallOrHash::Hash(h) => {
@@ -701,11 +701,19 @@ impl<T: Config> Pallet<T> {
 				T::Currency::unreserve(&m.depositor, m.deposit);
 
 				let result = call.dispatch(RawOrigin::Signed(id.clone()).into());
+				// update ExecutedCalls
 				let mut executed_calls = ExecutedCalls::<T>::get(&id);
 				let pos = executed_calls.len() as usize;
 				executed_calls.try_insert(pos, call_hash)
 					.map_err(|_| Error::<T>::TooManyCalls)?;
 				ExecutedCalls::<T>::insert(&id, executed_calls);
+				// update UnexecutedCalls
+				let mut unexecuted_calls = UnexecutedCalls::<T>::get(&id);
+				if let Some((pos, _)) = unexecuted_calls.iter().enumerate().find(|(_, call)| call == &&call_hash) {
+					unexecuted_calls.remove(pos);
+				}
+				UnexecutedCalls::<T>::insert(&id, unexecuted_calls);
+
 				Self::deposit_event(Event::MultisigExecuted {
 					approving: who,
 					timepoint,
