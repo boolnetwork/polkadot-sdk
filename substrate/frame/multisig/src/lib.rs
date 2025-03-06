@@ -123,6 +123,8 @@ where
 	approvals: BoundedVec<AccountId, MaxApprovals>,
 	/// Call data to execute.
 	call: Option<BoundedVec<u8, ConstU32<MAX_SIZE>>>,
+	/// If the call hash been executed.
+	finished: bool,
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo, MaxEncodedLen)]
@@ -288,6 +290,8 @@ pub mod pallet {
 		TooManyMultisigs,
 		/// There are too many call hashes for the multisig.
 		TooManyCalls,
+		/// The call already executed.
+		CallExecuted,
 	}
 
 	#[pallet::event]
@@ -677,6 +681,7 @@ impl<T: Config> Pallet<T> {
 			// Yes; ensure that the timepoint exists and agrees.
 			let timepoint = maybe_timepoint.ok_or(Error::<T>::NoTimepoint)?;
 			ensure!(m.when == timepoint, Error::<T>::WrongTimepoint);
+			ensure!(!m.finished, Error::<T>::CallExecuted);
 
 			// Ensure that either we have not yet signed or that it is at threshold.
 			let mut approvals = m.approvals.len() as u16;
@@ -695,10 +700,10 @@ impl<T: Config> Pallet<T> {
 					Error::<T>::MaxWeightTooLow
 				);
 
-				// Clean up storage before executing call to avoid an possibility of reentrancy
-				// attack.
-				<Multisigs<T>>::remove(&id, call_hash);
 				T::Currency::unreserve(&m.depositor, m.deposit);
+				// update state
+				m.finished = true;
+				<Multisigs<T>>::insert(&id, &call_hash, m);
 
 				let result = call.dispatch(RawOrigin::Signed(id.clone()).into());
 				// update ExecutedCalls
@@ -783,6 +788,7 @@ impl<T: Config> Pallet<T> {
 					depositor: who.clone(),
 					approvals: initial_approvals,
 					call: maybe_call.map(|call| call.encode().try_into().expect("Runtime call must encode successfully")),
+					finished: false,
 				},
 			);
 

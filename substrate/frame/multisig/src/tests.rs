@@ -27,7 +27,7 @@ use frame_support::{
 	assert_noop, assert_ok, derive_impl,
 	traits::{ConstU32, ConstU64, Contains},
 };
-use sp_runtime::{BuildStorage, TokenError};
+use sp_runtime::BuildStorage;
 
 type Block = frame_system::mocking::MockBlockU32<Test>;
 
@@ -441,12 +441,12 @@ fn multisig_2_of_3_cannot_reissue_same_call() {
 			}.into(),
 		);
 
-		assert_ok!(Multisig::as_multi(
+		assert_ok!(Multisig::approve_as_multi(
 			RuntimeOrigin::signed(2),
 			2,
 			vec![1, 3],
 			Some(now()),
-			call.clone(),
+			hash.clone(),
 			call_weight
 		));
 		assert_eq!(Balances::free_balance(multi), 5);
@@ -461,33 +461,16 @@ fn multisig_2_of_3_cannot_reissue_same_call() {
 				.into(),
 		);
 
-		assert_ok!(Multisig::as_multi(
-			RuntimeOrigin::signed(1),
-			2,
-			vec![2, 3],
-			None,
-			call.clone(),
-			Weight::zero()
-		));
-
-		assert_ok!(Multisig::as_multi(
-			RuntimeOrigin::signed(3),
-			2,
-			vec![1, 2],
-			Some(now()),
-			call.clone(),
-			call_weight
-		));
-
-		System::assert_last_event(
-			pallet_multisig::Event::MultisigExecuted {
-				approving: 3,
-				timepoint: now(),
-				multisig: multi,
-				call_hash: hash,
-				result: Err(TokenError::FundsUnavailable.into()),
-			}
-			.into(),
+		assert_noop!(
+			Multisig::approve_as_multi(
+				RuntimeOrigin::signed(3),
+				2,
+				vec![1, 2],
+				Some(now()),
+				hash.clone(),
+				Weight::zero()
+			),
+			Error::<Test>::CallExecuted,
 		);
 	});
 }
