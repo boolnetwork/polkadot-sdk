@@ -23,10 +23,11 @@ use super::*;
 
 use crate as pallet_multisig;
 use frame_support::{
+	parameter_types,
 	assert_noop, assert_ok, derive_impl,
 	traits::{ConstU32, ConstU64, Contains},
 };
-use sp_runtime::{BuildStorage, TokenError};
+use sp_runtime::BuildStorage;
 
 type Block = frame_system::mocking::MockBlockU32<Test>;
 
@@ -64,6 +65,11 @@ impl Contains<RuntimeCall> for TestBaseCallFilter {
 		}
 	}
 }
+
+parameter_types! {
+	pub TreasuryAccount: u64 = 1;
+}
+
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
@@ -71,6 +77,9 @@ impl Config for Test {
 	type DepositBase = ConstU64<1>;
 	type DepositFactor = ConstU64<1>;
 	type MaxSignatories = ConstU32<3>;
+	type MaxMultisigs = ConstU32<100>;
+	type MaxCalls = ConstU32<100>;
+	type TreasuryAccount = TreasuryAccount;
 	type WeightInfo = ();
 }
 
@@ -134,7 +143,7 @@ fn multisig_deposit_is_taken_and_returned() {
 fn cancel_multisig_returns_deposit() {
 	new_test_ext().execute_with(|| {
 		let call = call_transfer(6, 15).encode();
-		let hash = blake2_256(&call);
+		let hash = blake2_256(&(call.clone(), Multisig::timepoint()).encode());
 		assert_ok!(Multisig::approve_as_multi(
 			RuntimeOrigin::signed(1),
 			3,
@@ -168,7 +177,7 @@ fn timepoint_checking_works() {
 		assert_ok!(Balances::transfer_allow_death(RuntimeOrigin::signed(3), multi, 5));
 
 		let call = call_transfer(6, 15);
-		let hash = blake2_256(&call.encode());
+		let (hash, _) = call.using_encoded(|d| (blake2_256(&(d, Multisig::timepoint()).encode()), d.len()));
 
 		assert_noop!(
 			Multisig::approve_as_multi(
@@ -227,7 +236,8 @@ fn multisig_2_of_3_works() {
 
 		let call = call_transfer(6, 15);
 		let call_weight = call.get_dispatch_info().weight;
-		let hash = blake2_256(&call.encode());
+		let (hash, _) = call.using_encoded(|d| (blake2_256(&(d, Multisig::timepoint()).encode()), d.len()));
+
 		assert_ok!(Multisig::approve_as_multi(
 			RuntimeOrigin::signed(1),
 			2,
@@ -260,7 +270,8 @@ fn multisig_3_of_3_works() {
 
 		let call = call_transfer(6, 15);
 		let call_weight = call.get_dispatch_info().weight;
-		let hash = blake2_256(&call.encode());
+		let (hash, _) = call.using_encoded(|d| (blake2_256(&(d, Multisig::timepoint()).encode()), d.len()));
+
 		assert_ok!(Multisig::approve_as_multi(
 			RuntimeOrigin::signed(1),
 			3,
@@ -295,7 +306,7 @@ fn multisig_3_of_3_works() {
 fn cancel_multisig_works() {
 	new_test_ext().execute_with(|| {
 		let call = call_transfer(6, 15).encode();
-		let hash = blake2_256(&call);
+		let hash = blake2_256(&(call.clone(), Multisig::timepoint()).encode());
 		assert_ok!(Multisig::approve_as_multi(
 			RuntimeOrigin::signed(1),
 			3,
@@ -413,7 +424,7 @@ fn multisig_2_of_3_cannot_reissue_same_call() {
 
 		let call = call_transfer(6, 10);
 		let call_weight = call.get_dispatch_info().weight;
-		let hash = blake2_256(&call.encode());
+		let (hash, _) = call.using_encoded(|d| (blake2_256(&(d, Multisig::timepoint()).encode()), d.len()));
 		assert_ok!(Multisig::as_multi(
 			RuntimeOrigin::signed(1),
 			2,
@@ -422,42 +433,44 @@ fn multisig_2_of_3_cannot_reissue_same_call() {
 			call.clone(),
 			Weight::zero()
 		));
-		assert_ok!(Multisig::as_multi(
+		System::assert_last_event(
+			pallet_multisig::Event::NewMultisig {
+				approving: 1,
+				multisig: multi,
+				call_hash: hash,
+			}.into(),
+		);
+
+		assert_ok!(Multisig::approve_as_multi(
 			RuntimeOrigin::signed(2),
 			2,
 			vec![1, 3],
 			Some(now()),
-			call.clone(),
+			hash.clone(),
 			call_weight
 		));
 		assert_eq!(Balances::free_balance(multi), 5);
-
-		assert_ok!(Multisig::as_multi(
-			RuntimeOrigin::signed(1),
-			2,
-			vec![2, 3],
-			None,
-			call.clone(),
-			Weight::zero()
-		));
-		assert_ok!(Multisig::as_multi(
-			RuntimeOrigin::signed(3),
-			2,
-			vec![1, 2],
-			Some(now()),
-			call.clone(),
-			call_weight
-		));
-
 		System::assert_last_event(
 			pallet_multisig::Event::MultisigExecuted {
-				approving: 3,
+				approving: 2,
 				timepoint: now(),
 				multisig: multi,
 				call_hash: hash,
-				result: Err(TokenError::FundsUnavailable.into()),
+				result: Ok(())
 			}
-			.into(),
+				.into(),
+		);
+
+		assert_noop!(
+			Multisig::approve_as_multi(
+				RuntimeOrigin::signed(3),
+				2,
+				vec![1, 2],
+				Some(now()),
+				hash.clone(),
+				Weight::zero()
+			),
+			Error::<Test>::CallExecuted,
 		);
 	});
 }
@@ -513,7 +526,7 @@ fn too_many_signatories_fails() {
 fn duplicate_approvals_are_ignored() {
 	new_test_ext().execute_with(|| {
 		let call = call_transfer(6, 15).encode();
-		let hash = blake2_256(&call);
+		let hash = blake2_256(&(call.clone(), Multisig::timepoint()).encode());
 		assert_ok!(Multisig::approve_as_multi(
 			RuntimeOrigin::signed(1),
 			2,
@@ -564,7 +577,7 @@ fn multisig_1_of_3_works() {
 		assert_ok!(Balances::transfer_allow_death(RuntimeOrigin::signed(3), multi, 5));
 
 		let call = call_transfer(6, 15);
-		let hash = blake2_256(&call.encode());
+		let hash = blake2_256(&(call.clone(), Multisig::timepoint()).encode());
 		assert_noop!(
 			Multisig::approve_as_multi(
 				RuntimeOrigin::signed(1),
@@ -654,7 +667,8 @@ fn multisig_handles_no_preimage_after_all_approve() {
 
 		let call = call_transfer(6, 15);
 		let call_weight = call.get_dispatch_info().weight;
-		let hash = blake2_256(&call.encode());
+		let (hash, _) = call.using_encoded(|d| (blake2_256(&(d, Multisig::timepoint()).encode()), d.len()));
+
 		assert_ok!(Multisig::approve_as_multi(
 			RuntimeOrigin::signed(1),
 			3,

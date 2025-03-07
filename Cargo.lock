@@ -10214,6 +10214,7 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-balances",
+ "pallet-sudo",
  "parity-scale-codec",
  "scale-info",
  "sp-io",
