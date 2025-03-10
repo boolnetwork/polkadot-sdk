@@ -76,6 +76,14 @@ impl LocalKeystore {
 		self.0.read().key_pair::<Pair>(public)
 	}
 
+	/// Get the raw keystore value for the given public key.
+	///
+	/// Returns `Ok(None)` if the key doesn't exist, `Ok(Some(_))` if the key exists and
+	/// `Err(_)` when something failed.
+	pub fn raw_keystore_value<Pair: AppPair>(&self, public: &<Pair as AppCrypto>::Public) -> Result<Option<String>> {
+		self.0.read().raw_keystore_value::<Pair>(public)
+	}
+
 	fn public_keys<T: CorePair>(&self, key_type: KeyTypeId) -> Vec<T::Public> {
 		self.0
 			.read()
@@ -630,6 +638,29 @@ impl KeystoreInner {
 	) -> Result<Option<Pair>> {
 		self.key_pair_by_type::<Pair::Generic>(IsWrappedBy::from_ref(public), Pair::ID)
 			.map(|v| v.map(Into::into))
+	}
+
+	/// Get the raw keystore value for the given public key.
+	/// 
+	/// Returns `Ok(None)` if the key doesn't exist, `Ok(Some(_))` if the key exists or `Err(_)`
+	/// when something failed.
+	pub fn raw_keystore_value<Pair: AppPair>(
+		&self,
+		public: &<Pair as AppCrypto>::Public,
+	) -> Result<Option<String>> {
+		let path = if let Some(path) = self.key_file_path(public.as_slice(), Pair::ID) {
+			path
+		} else {
+			return Ok(None);
+		};
+
+		if path.exists() {
+			let file = File::open(path)?;
+
+			serde_json::from_reader(&file).map_err(Into::into).map(Some)
+		} else {
+			Ok(None)
+		}
 	}
 }
 

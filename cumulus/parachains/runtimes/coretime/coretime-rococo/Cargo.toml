@@ -73,6 +73,9 @@ parachain-info.workspace = true
 parachains-common.workspace = true
 testnet-parachains-constants = { features = ["rococo"], workspace = true }
 
+[dev-dependencies]
+parachains-runtimes-test-utils = { path = "../../test-utils", default-features = false }
+
 [features]
 default = ["std"]
 std = [

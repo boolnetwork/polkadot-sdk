@@ -1,6 +1,6 @@
 [package]
 name = "asset-hub-rococo-runtime"
-version = "0.21.0"
+version = "0.21.2"
 authors.workspace = true
 edition.workspace = true
 description = "Rococo variant of Asset Hub parachain runtime (polkadot v1.15.0)"
@@ -89,6 +89,7 @@ snowbridge-router-primitives.workspace = true
 
 [dev-dependencies]
 asset-test-utils = { default-features = true, path = "../test-utils" }
+parachains-runtimes-test-utils = { default-features = true, path = "../../test-utils" }
 
 [build-dependencies]
 substrate-wasm-builder = { optional = true, workspace = true, default-features = true }
