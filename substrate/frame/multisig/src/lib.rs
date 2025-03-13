@@ -152,7 +152,6 @@ enum CallOrHash<T: Config> {
 pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
-	use frame_support::traits::ExistenceRequirement;
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
@@ -373,8 +372,11 @@ pub mod pallet {
 			let result = call.dispatch(RawOrigin::Signed(id.clone()).into());
 			let mut executed_calls = ExecutedCalls::<T>::get(&id);
 			let pos = executed_calls.len() as usize;
-			executed_calls.try_insert(pos, call_hash)
-				.map_err(|_| Error::<T>::TooManyCalls)?;
+			if pos >= T::MaxCalls::get() as usize {
+				// remove the first call
+				executed_calls.remove(0);
+			}
+			executed_calls.try_insert(pos, call_hash).expect("insert executed calls should successfully");
 			ExecutedCalls::<T>::insert(&id, executed_calls);
 
 			result
@@ -447,6 +449,7 @@ pub mod pallet {
 			.max(T::WeightInfo::as_multi_complete(s, z))
 			.saturating_add(*max_weight)
 		})]
+		#[transactional]
 		pub fn as_multi(
 			origin: OriginFor<T>,
 			threshold: u16,
@@ -504,6 +507,7 @@ pub mod pallet {
 				.max(T::WeightInfo::approve_as_multi_approve(s))
 				.saturating_add(*max_weight)
 		})]
+		#[transactional]
 		pub fn approve_as_multi(
 			origin: OriginFor<T>,
 			threshold: u16,
@@ -571,8 +575,8 @@ pub mod pallet {
 			let mut unexecuted_calls = UnexecutedCalls::<T>::get(&id);
 			if let Some((pos, _)) = unexecuted_calls.iter().enumerate().find(|(_, call)| call == &&call_hash) {
 				unexecuted_calls.remove(pos);
+				UnexecutedCalls::<T>::insert(&id, unexecuted_calls);
 			}
-			UnexecutedCalls::<T>::insert(&id, unexecuted_calls);
 			<Multisigs<T>>::remove(&id, &call_hash);
 
 			Self::deposit_event(Event::MultisigCancelled {
@@ -601,29 +605,13 @@ pub mod pallet {
 			let signatories = Self::ensure_sorted_and_insert(other_signatories, who.clone())?;
 			let id = Self::multi_account_id(&signatories, threshold);
 			ensure!(!MultisigsForAccount::<T>::get(&who).iter().any(|v| v.multisig == id), Error::<T>::MultisigAlreadyRegistered);
-			let deposit = T::DepositBase::get() + T::DepositFactor::get() * threshold.into();
-			T::Currency::transfer(
-				&who,
-				&T::TreasuryAccount::get(),
-				deposit,
-				ExistenceRequirement::AllowDeath,
-			)?;
 
-			for part in &signatories {
-				let mut list = MultisigsForAccount::<T>::get(&part);
-				let pos = list.len();
-				list.try_insert(pos, MultisigOrigin {
-					multisig: id.clone(),
-					signatories: signatories.clone().try_into().unwrap(), // already checked
-					threshold,
-				})
-					.map_err(|_| Error::<T>::TooManyMultisigs)?;
-				MultisigsForAccount::<T>::insert(&part, list);
-			}
-			Self::deposit_event(Event::MultiAccountCreated {
-				sender: who,
-				multisig: id,
-			});
+			Self::do_register_multisig(
+				who,
+				threshold,
+				signatories,
+				id
+			)?;
 			Ok(())
 		}
 	}
@@ -656,6 +644,14 @@ impl<T: Config> Pallet<T> {
 		let signatories = Self::ensure_sorted_and_insert(other_signatories, who.clone())?;
 
 		let id = Self::multi_account_id(&signatories, threshold);
+		if !MultisigsForAccount::<T>::get(&who).iter().any(|v| v.multisig == id) {
+			Self::do_register_multisig(
+				who.clone(),
+				threshold,
+				signatories,
+				id.clone()
+			)?;
+		}
 		// Threshold > 1; this means it's a multi-step operation. We extract the `call_hash`.
 		let (call_hash, call_len, maybe_call) = match call_or_hash {
 			CallOrHash::Call(call) => {
@@ -709,15 +705,18 @@ impl<T: Config> Pallet<T> {
 				// update ExecutedCalls
 				let mut executed_calls = ExecutedCalls::<T>::get(&id);
 				let pos = executed_calls.len() as usize;
-				executed_calls.try_insert(pos, call_hash)
-					.map_err(|_| Error::<T>::TooManyCalls)?;
+				if pos >= T::MaxCalls::get() as usize {
+					// remove the first call
+					executed_calls.remove(0);
+				}
+				executed_calls.try_insert(pos, call_hash).expect("insert executed calls should successfully");
 				ExecutedCalls::<T>::insert(&id, executed_calls);
 				// update UnexecutedCalls
 				let mut unexecuted_calls = UnexecutedCalls::<T>::get(&id);
 				if let Some((pos, _)) = unexecuted_calls.iter().enumerate().find(|(_, call)| call == &&call_hash) {
 					unexecuted_calls.remove(pos);
+					UnexecutedCalls::<T>::insert(&id, unexecuted_calls);
 				}
-				UnexecutedCalls::<T>::insert(&id, unexecuted_calls);
 
 				Self::deposit_event(Event::MultisigExecuted {
 					approving: who,
@@ -767,13 +766,14 @@ impl<T: Config> Pallet<T> {
 			ensure!(maybe_timepoint.is_none(), Error::<T>::UnexpectedTimepoint);
 			let mut unexecuted_calls = UnexecutedCalls::<T>::get(&id);
 			let pos = unexecuted_calls.len() as usize;
-			unexecuted_calls.try_insert(pos, call_hash)
-				.map_err(|_| Error::<T>::TooManyCalls)?;
-			UnexecutedCalls::<T>::insert(&id, unexecuted_calls);
+			if pos >= T::MaxCalls::get() as usize {
+				// remove the first call
+				unexecuted_calls.remove(0);
+			}
+			unexecuted_calls.try_insert(pos, call_hash).expect("insert unexecuted calls should successfully");
 
 			// Just start the operation by recording it in storage.
 			let deposit = T::DepositBase::get() + T::DepositFactor::get() * threshold.into();
-
 			T::Currency::reserve(&who, deposit)?;
 
 			let initial_approvals =
@@ -791,6 +791,7 @@ impl<T: Config> Pallet<T> {
 					finished: false,
 				},
 			);
+			UnexecutedCalls::<T>::insert(&id, unexecuted_calls);
 
 			Self::deposit_event(Event::NewMultisig { approving: who, multisig: id, call_hash });
 
@@ -799,6 +800,37 @@ impl<T: Config> Pallet<T> {
 			// Call is not made, so the actual weight does not include call
 			Ok(Some(final_weight).into())
 		}
+	}
+
+	fn do_register_multisig(
+		who: T::AccountId,
+		threshold: u16,
+		signatories: Vec<T::AccountId>, // contains 'who'
+		multisig: T::AccountId,
+	) -> DispatchResult {
+		let deposit = T::DepositBase::get() + T::DepositFactor::get() * threshold.into();
+		T::Currency::transfer(
+			&who,
+			&T::TreasuryAccount::get(),
+			deposit,
+			frame_support::traits::ExistenceRequirement::AllowDeath,
+		)?;
+		for part in &signatories {
+			let mut list = MultisigsForAccount::<T>::get(&part);
+			let pos = list.len();
+			list.try_insert(pos, MultisigOrigin {
+				multisig: multisig.clone(),
+				signatories: signatories.clone().try_into().unwrap(), // already checked
+				threshold,
+			})
+				.map_err(|_| Error::<T>::TooManyMultisigs)?;
+			MultisigsForAccount::<T>::insert(&part, list);
+		}
+		Self::deposit_event(Event::MultiAccountCreated {
+			sender: who,
+			multisig,
+		});
+		Ok(())
 	}
 
 	/// The current `Timepoint`.
