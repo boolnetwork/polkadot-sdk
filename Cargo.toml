@@ -4,6 +4,7 @@ resolver = "2"
 members = [
 	"bin/node-template/node",
 	"bin/node-template/pallets/template",
+	"bin/node/pallets/xbit-perp",
 	"bin/node-template/runtime",
 	"bin/node/bench",
 	"bin/node/cli",
@@ -257,7 +258,7 @@ members = [
 	"utils/frame/rpc/client",
 	"utils/prometheus",
 	"utils/wasm-builder",
-	"utils/binary-merkle-tree",
+	"utils/binary-merkle-tree", "bin/node/pallets/xbit-perp",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates

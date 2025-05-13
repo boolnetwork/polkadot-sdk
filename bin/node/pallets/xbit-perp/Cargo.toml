@@ -1,0 +1,27 @@
+[package]
+name = "xbit-perp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+frame-support = { version = "4.0.0-dev", default-features = false, path = "../../../../frame/support" }
+frame-system = { version = "4.0.0-dev", default-features = false, path = "../../../../frame/system" }
+sp-std = { version = "5.0.0", default-features = false, path = "../../../../primitives/std" }
+codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
+    "derive",
+] }
+scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
+
+[dev-dependencies]
+sp-runtime = { version = "7.0.0", path = "../../../../primitives/runtime" }
+sp-core = { version = "7.0.0", path = "../../../../primitives/core" }
+
+[features]
+default = ["std"]
+
+std = [
+    'frame-support/std',
+    'frame-system/std',
+    'codec/std',
+    'sp-std/std',
+]
