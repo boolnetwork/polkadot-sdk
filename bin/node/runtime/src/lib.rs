@@ -1809,6 +1809,30 @@ impl pallet_statement::Config for Runtime {
 	type MaxAllowedBytes = MaxAllowedBytes;
 }
 
+pub mod crypto {
+    use pallet_new_oracle::KEY_TYPE;
+    use sp_runtime::{
+        app_crypto::{app_crypto, sr25519},
+        MultiSignature, MultiSigner,
+    };
+    
+    app_crypto!(sr25519, KEY_TYPE);
+
+    pub struct OffchainAuthId;
+    
+    // Implementation for MultiSignature setup
+    impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for OffchainAuthId {
+        type RuntimeAppPublic = Public;
+        type GenericSignature = sp_core::sr25519::Signature;
+        type GenericPublic = sp_core::sr25519::Public;
+    }
+}
+
+impl pallet_new_oracle::Config for Runtime {
+	type AuthorityId = pallet_new_oracle::crypto::AuthorityId;
+	type RuntimeEvent = RuntimeEvent;
+}
+
 construct_runtime!(
 	pub struct Runtime where
 		Block = Block,
@@ -1882,6 +1906,7 @@ construct_runtime!(
 		MessageQueue: pallet_message_queue,
 		Pov: frame_benchmarking_pallet_pov,
 		Statement: pallet_statement,
+		NewOracle: pallet_new_oracle,
 	}
 );
 

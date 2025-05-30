@@ -3924,6 +3924,7 @@ dependencies = [
  "pallet-message-queue",
  "pallet-mmr",
  "pallet-multisig",
+ "pallet-new-oracle",
  "pallet-nft-fractionalization",
  "pallet-nfts",
  "pallet-nfts-runtime-api",
@@ -4860,6 +4861,12 @@ dependencies = [
  "rand_core 0.5.1",
  "zeroize",
 ]
+
+[[package]]
+name = "microjson"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "66f607672273239fe03881b7ce95721079e1d08f6a7ef98da2b144f68fe1502c"
 
 [[package]]
 name = "minimal-lexical"
@@ -6620,6 +6627,24 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-new-oracle"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "lite-json",
+ "log",
+ "microjson",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
  "sp-runtime",
  "sp-std",
 ]
