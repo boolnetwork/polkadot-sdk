@@ -1,4 +1,4 @@
-### ✅ Steps to Build
+### ▶️ Steps to Build
 
 ```
 cargo build --release -p node-cli
@@ -15,10 +15,6 @@ rm -rf /tmp/solochain
 ```
 ./target/xxxxx --base-path /tmp/solochain --dev
 ```
-
-Here's the English documentation you requested:
-
----
 
 ### ✅ Steps to Use
 
