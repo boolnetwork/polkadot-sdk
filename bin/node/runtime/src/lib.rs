@@ -324,8 +324,9 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					| RuntimeCall::Elections(..)
 					| RuntimeCall::Treasury(..)
 			),
-			ProxyType::Staking =>
-				matches!(c, RuntimeCall::Staking(..) | RuntimeCall::FastUnstake(..)),
+			ProxyType::Staking => {
+				matches!(c, RuntimeCall::Staking(..) | RuntimeCall::FastUnstake(..))
+			},
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
@@ -1809,6 +1810,19 @@ impl pallet_statement::Config for Runtime {
 	type MaxAllowedBytes = MaxAllowedBytes;
 }
 
+parameter_types! {
+	pub const InsuranceVaultPalletId: PalletId = PalletId(*b"insuranc");
+	pub const UsdtId: u32 = 1;
+	pub const MinStakeBlocks: BlockNumber = 100;
+}
+
+impl pallet_insurance_vault::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type UsdtAssetId = UsdtId;
+	type MinStakeDuration = MinStakeBlocks;
+	type PalletId = InsuranceVaultPalletId;
+}
+
 construct_runtime!(
 	pub struct Runtime where
 		Block = Block,
@@ -1882,6 +1896,7 @@ construct_runtime!(
 		MessageQueue: pallet_message_queue,
 		Pov: frame_benchmarking_pallet_pov,
 		Statement: pallet_statement,
+		InsuranceVault: pallet_insurance_vault,
 	}
 );
 

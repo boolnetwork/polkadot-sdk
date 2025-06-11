@@ -78,6 +78,7 @@ pallet-grandpa = { version = "4.0.0-dev", default-features = false, path = "../.
 pallet-im-online = { version = "4.0.0-dev", default-features = false, path = "../../../frame/im-online" }
 pallet-indices = { version = "4.0.0-dev", default-features = false, path = "../../../frame/indices" }
 pallet-identity = { version = "4.0.0-dev", default-features = false, path = "../../../frame/identity" }
+pallet-insurance-vault = { version = "4.0.0-dev", default-features = false, path = "../../../frame/insurance-vault" }
 pallet-lottery = { version = "4.0.0-dev", default-features = false, path = "../../../frame/lottery" }
 pallet-membership = { version = "4.0.0-dev", default-features = false, path = "../../../frame/membership" }
 pallet-message-queue = { version = "7.0.0-dev", default-features = false, path = "../../../frame/message-queue" }
@@ -162,6 +163,7 @@ std = [
 	"pallet-grandpa/std",
 	"pallet-im-online/std",
 	"pallet-indices/std",
+	"pallet-insurance-vault/std",
 	"sp-inherents/std",
 	"pallet-lottery/std",
 	"pallet-membership/std",
