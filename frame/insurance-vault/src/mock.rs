@@ -137,6 +137,7 @@ impl pallet_insurance_vault::Config for Test {
 	type UsdtAssetId = UsdtId;
 	type MinStakeDuration = MinStakeBlocks;
 	type PalletId = InsuranceVaultPalletId;
+	type WeightInfo = ();
 }
 
 pub type AccountIdOf<Test> = <Test as frame_system::Config>::AccountId;

@@ -1821,6 +1821,7 @@ impl pallet_insurance_vault::Config for Runtime {
 	type UsdtAssetId = UsdtId;
 	type MinStakeDuration = MinStakeBlocks;
 	type PalletId = InsuranceVaultPalletId;
+	type WeightInfo = pallet_insurance_vault::weights::SubstrateWeight<Runtime>;
 }
 
 construct_runtime!(
@@ -2024,6 +2025,7 @@ mod benches {
 		[pallet_utility, Utility]
 		[pallet_vesting, Vesting]
 		[pallet_whitelist, Whitelist]
+		[pallet_insurance_vault, InsuranceVault]
 	);
 }
 

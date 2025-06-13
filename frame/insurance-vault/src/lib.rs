@@ -1,9 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 pub mod mock;
 #[cfg(test)]
 mod tests;
+
+pub mod weights;
+pub use weights::WeightInfo;
 
 pub use pallet::*;
 
@@ -37,6 +42,8 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
+		type WeightInfo: WeightInfo;
 	}
 
 	/// Type alias for the USDT balance (inherited from pallet_assets).
@@ -120,7 +127,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(10_000)]
+		#[pallet::call_index(0)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::stake())]
 		pub fn stake(origin: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(amount > Zero::zero(), Error::<T>::ZeroAmount);
@@ -162,7 +170,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::call_index(1)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::unstake())]
 		pub fn unstake(origin: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			ensure!(amount > Zero::zero(), Error::<T>::ZeroAmount);
@@ -213,7 +222,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::call_index(3)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::claim())]
 		pub fn claim(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Self::settle_reward(&who);
@@ -241,7 +251,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::call_index(4)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::exit())]
 		pub fn exit(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let user_staked: BalanceOf<T> = Self::user_stake(&who);
@@ -292,7 +303,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::call_index(5)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::add_reward())]
 		pub fn add_reward(
 			origin: OriginFor<T>,
 			amount: BalanceOf<T>,
@@ -314,6 +326,7 @@ pub mod pallet {
 			.map_err(|_| Error::<T>::InsufficientBalance)?;
 
 			let total: BalanceOf<T> = Self::total_stake();
+			ensure!(total > Zero::zero(), Error::<T>::NoPoolStake);
 			let total_u128: u128 = total.try_into().map_err(|_| Error::<T>::NoPoolStake)?;
 			let amount_u128: u128 = amount.try_into().map_err(|_| Error::<T>::NoPoolStake)?;
 			let delta = FixedU128::saturating_from_rational(amount_u128, total_u128);
@@ -324,7 +337,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::call_index(6)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_min_stake_duration())]
 		pub fn set_min_stake_duration(
 			origin: OriginFor<T>,
 			new: BlockNumberOf<T>,
@@ -336,6 +350,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(7)]
 		#[pallet::weight(10_000)]
 		pub fn set_clearing_account(
 			origin: OriginFor<T>,
@@ -347,7 +362,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::call_index(8)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::compensate())]
 		pub fn compensate(
 			origin: OriginFor<T>,
 			to: T::AccountId,
