@@ -233,7 +233,7 @@ impl<'a, I: AsRef<[u8]>, T: IntoIterator<Item = I>> Request<'a, T> {
 }
 
 /// A request error
-#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Error {
 	/// Deadline has been reached.
 	DeadlineReached,
