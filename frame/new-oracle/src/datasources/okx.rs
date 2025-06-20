@@ -24,7 +24,7 @@ impl PriceSource for OKX {
 		let okx_url = "https://www.okx.com/api/v5/market/tickers?instType=SWAP";
 
 		let deadline: sp_core::offchain::Timestamp =
-			sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
+			sp_io::offchain::timestamp().add(Duration::from_millis(10_000));
 		let request = http::Request::get(&okx_url);
 
 		let pending = request.deadline(deadline).send().map_err(|_| http::Error::IoError)?;

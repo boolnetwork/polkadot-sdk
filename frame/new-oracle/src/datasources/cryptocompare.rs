@@ -23,7 +23,7 @@ impl PriceSource for CryptoCompare {
 		);
 
 		let deadline: sp_core::offchain::Timestamp =
-			sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
+			sp_io::offchain::timestamp().add(Duration::from_millis(10_000));
 		let request = http::Request::get(&cryptocompare_url);
 
 		let pending = request.deadline(deadline).send().map_err(|_| http::Error::IoError)?;

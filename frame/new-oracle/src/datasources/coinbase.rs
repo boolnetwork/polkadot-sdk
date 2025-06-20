@@ -24,7 +24,7 @@ impl PriceSource for Coinbase {
 	fn fetch(&self, symbols: &[String]) -> Result<PriceList, http::Error> {
 		let mut out = Vec::new();
 		let deadline: sp_core::offchain::Timestamp =
-			sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
+			sp_io::offchain::timestamp().add(Duration::from_millis(10_000));
 		for symbol in symbols {
 			// "https://api.exchange.coinbase.com/products/{}-USDT/ticker",
 			let url = format!("http://localhost:3000/coinbase?symbol={}-USDT", symbol);

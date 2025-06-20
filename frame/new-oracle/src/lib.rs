@@ -109,7 +109,7 @@ pub mod pallet {
 
 			let seed = sp_io::offchain::random_seed();
 			let extra = u64::from_le_bytes(seed.as_ref()[0..8].try_into().unwrap()) % 8000;
-			let delay = Duration::from_millis(6_000 + extra);
+			let delay = Duration::from_millis(20_000 + extra);
 			{
 				let mut lock = StorageLock::<Time>::with_deadline(b"btc_http_lock", delay);
 
