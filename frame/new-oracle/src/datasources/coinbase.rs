@@ -26,8 +26,8 @@ impl PriceSource for Coinbase {
 		let deadline: sp_core::offchain::Timestamp =
 			sp_io::offchain::timestamp().add(Duration::from_millis(10_000));
 		for symbol in symbols {
-			// "https://api.exchange.coinbase.com/products/{}-USDT/ticker",
-			let url = format!("http://localhost:3000/coinbase?symbol={}-USDT", symbol);
+			"https://api.exchange.coinbase.com/products/{}-USDT/ticker",
+			// let url = format!("http://localhost:3000/coinbase?symbol={}-USDT", symbol);
 
 			let request = http::Request::get(&url)
 				.add_header("User-Agent", "Substrate-Offchain-Worker")

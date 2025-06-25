@@ -23,8 +23,8 @@ impl PriceSource for Bybit {
 	}
 
 	fn fetch(&self, symbols: &[String]) -> Result<PriceList, http::Error> {
-		// let bt_url = "https://api.bybit.com/v5/market/tickers?category=linear";
-		let bt_url = "http://localhost:3000/bybit";
+		let bt_url = "https://api.bybit.com/v5/market/tickers?category=linear";
+		// let bt_url = "http://localhost:3000/bybit";
 
 		let deadline: sp_core::offchain::Timestamp =
 			sp_io::offchain::timestamp().add(Duration::from_millis(10_000));

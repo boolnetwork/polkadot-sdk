@@ -22,8 +22,8 @@ impl PriceSource for Binance {
 		90
 	}
 	fn fetch(&self, symbols: &[String]) -> Result<PriceList, http::Error> {
-		// let b_url = "https://fapi.binance.com/fapi/v1/ticker/price";
-		let b_url = "http://localhost:3000/binance"; //local test api
+		let b_url = "https://fapi.binance.com/fapi/v1/ticker/price";
+		// let b_url = "http://localhost:3000/binance"; //local test api
 
 		let deadline: sp_core::offchain::Timestamp =
 			sp_io::offchain::timestamp().add(Duration::from_millis(10_000));

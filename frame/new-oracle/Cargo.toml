@@ -27,7 +27,8 @@ sp-std = { version = "5.0.0", default-features = false, path = "../../primitives
 microjson =  { version = "0.1.6", default-features = false}
 
 [features]
-default = ["std", "cryptocompare", "okx"]
+# default = ["std", "cryptocompare", "okx"]
+default = ["std", "okx", "binance", "bybit", "coinbase"]
 std = [
 	"codec/std",
 	"frame-support/std",
